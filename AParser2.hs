@@ -1,4 +1,4 @@
-module AParser (Parser, runParser, satisfy, char, posInt) where
+module AParser2 where -- (Parser, runParser, satisfy, char, posInt))
 
 import           Control.Applicative
 import           Data.Char
@@ -34,8 +34,8 @@ instance Functor Parser where
 
 instance Applicative Parser where
   pure a = Parser (\s -> Just (a, s))
-  (Parser fp) <*> xp = Parser $ \s ->
-    case fp s of
+  (Parser fp) <*> xp = Parser g where
+    g s = case fp s of
       Nothing     -> Nothing
       Just (f,s') -> runParser (f <$> xp) s'
 

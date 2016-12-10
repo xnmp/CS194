@@ -10,6 +10,8 @@ import Data.Monoid
 import Sized
 import Data.Char
 import qualified Data.Map as Map
+import Buffer
+import Editor
 
 data JoinList m a = Empty | Single m a | Append m (JoinList m a) (JoinList m a)
     -- Empty :: (Monoid m, Eq a) => JoinList m a
@@ -33,9 +35,13 @@ tag Empty = mempty
 tag (Single a _) = a
 tag (Append a _ _) = a
 
+-- need this for indexing
 data MaybeJ a = NothingJ | JustJ a deriving (Show, Eq)
 
--- need this for indexing
+unMaybeJ :: MaybeJ a -> Maybe a
+unMaybeJ (JustJ a) = Just a
+unMaybeJ NothingJ = Nothing
+
 instance (Monoid a) => Monoid (MaybeJ a) where
     mempty = NothingJ
     mappend NothingJ NothingJ = NothingJ
@@ -60,6 +66,11 @@ instance (Monoid a) => Monoid (MaybeJ a) where
 --         newres = indexJ (i - size_x) y
 --         size_x = getSize . size . tag $ x
 --         size_jl = getSize . size . tag $ jl
+
+jlToList :: JoinList m a -> [a]
+jlToList Empty = []
+jlToList (Single _ a) = [a]
+jlToList (Append _ l1 l2) = jlToList l1 ++ jlToList l2
 
 foldJoinList :: (Sized b, Monoid b, Monoid c) => (Int -> JoinList b a -> c) -> Int -> JoinList b a -> c
 foldJoinList f n jl@(Append m x y)
@@ -94,6 +105,9 @@ indexJ n jl = NothingJ
 -- Scrabble section
 newtype Score = Score Int deriving (Show, Eq, Num)
 
+getScore :: Score -> Int
+getScore (Score x) = x
+
 instance Monoid Score where
     mempty = Score 0
     mappend (Score a) (Score b) = Score (a + b)
@@ -116,6 +130,44 @@ scoreString ss = sum $ map score ss
 scoreLine :: String -> JoinList Score String
 scoreLine ss = Single (scoreString ss) ss
 
+instance Sized String where
+    size = Size . length 
+
+scoreLine2 :: String -> JoinList (Score, Size) String
+scoreLine2 ss = Single (scoreString ss, size ss) ss
+
+instance Buffer (JoinList (Score, Size) String) where
+      -- | Convert a buffer to a String.
+  toString = concat . jlToList  
+
+  -- | Create a buffer from a String.
+  fromString x = foldl1 (<>) (map scoreLine2 . linesOfLength 20 $ x)
+
+  -- | Extract the nth line (0-indexed) from a buffer.  Return Nothing
+  -- for out-of-bounds indices.
+  line x b = unMaybeJ $ indexJ x b
+
+  -- | @replaceLine n ln buf@ returns a modified version of @buf@,
+  --   with the @n@th line replaced by @ln@.  If the index is
+  --   out-of-bounds, the buffer should be returned unmodified.
+  replaceLine n ss jl = case dropJ n jl of
+    Empty -> takeJ (n-1) jl <> scoreLine2 ss <> dropJ n jl
+    otherwise -> jl
+    
+  -- | Compute the number of lines in the buffer.
+  numLines = getSize . snd . tag
+
+  -- | Compute the value of the buffer, i.e. the amount someone would
+  --   be paid for publishing the contents of the buffer.
+  value = getScore . fst . tag
+
+linesOfLength :: Int -> String -> [String]
+linesOfLength n ss = case drop (n-1) ss of
+    [] -> [ss]
+    (x:xs) -> [take n ss] ++ linesOfLength n xs
+
+a = fromString ['a'..'z'] :: JoinList (Score, Size) String
 
 
-main = print $  scoreLine "yay " +++ scoreLine "haskell!"
+main = print $ scoreLine2 "yay " +++ scoreLine2 "haskell!"
+-- main = print $ toString a

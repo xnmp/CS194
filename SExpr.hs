@@ -7,25 +7,25 @@ module SExpr where
 import AParser
 import Control.Applicative
 
-------------------------------------------------------------
---  1. Parsing repetitions
-------------------------------------------------------------
+-- ------------------------------------------------------------
+-- --  1. Parsing repetitions
+-- ------------------------------------------------------------
 
-zeroOrMore :: Parser a -> Parser [a]
-zeroOrMore p = undefined
+-- zeroOrMore :: Parser a -> Parser [a]
+-- zeroOrMore p = undefined
 
-oneOrMore :: Parser a -> Parser [a]
-oneOrMore p = undefined
+-- oneOrMore :: Parser a -> Parser [a]
+-- oneOrMore p = undefined
 
-------------------------------------------------------------
---  2. Utilities
-------------------------------------------------------------
+-- ------------------------------------------------------------
+-- --  2. Utilities
+-- ------------------------------------------------------------
 
-spaces :: Parser String
-spaces = undefined
+-- spaces :: Parser String
+-- spaces = undefined
 
-ident :: Parser String
-ident = undefined
+-- ident :: Parser String
+-- ident = undefined
 
 ------------------------------------------------------------
 --  3. Parsing S-expressions

@@ -25,4 +25,4 @@ die = getRandom
 
 type Army = Int
 
-data Battlefield = Battlefield { attackers :: Army, defenders :: Army }
+data Battlefield = Battlefield { attackers :: Army, defenders :: Army } deriving (Show)
