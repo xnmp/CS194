@@ -15,11 +15,12 @@ import Control.Monad
 helper :: Parser a -> Parser [a] -> Parser [a]
 helper p1 p2 = liftA2 (:) p1 p2 <|> pure mempty
 
+-- also known as "many"
 zeroOrMore :: Parser a -> Parser [a]
 zeroOrMore p = foldr helper (pure []) $ repeat p
 
 -- can actually do this with a custom instance of traversable using helper, then use sequencea
-
+-- also known as "some"
 oneOrMore :: Parser a -> Parser [a]
 oneOrMore p = concat <$> sequenceA [pure <$> p, zeroOrMore p]
 -- oneOrMore p = liftA2 (:) p (zeroOrMore p)
@@ -59,7 +60,8 @@ instance Monad Parser where
         g ss = case fp ss of
             Nothing -> Nothing
             Just (x, ss1) -> runParser (f x) ss1
-    
+
+-- join function
 jjj :: Parser (Parser a) -> Parser a
 jjj (Parser g) = Parser h where
     h ss = case g ss of
